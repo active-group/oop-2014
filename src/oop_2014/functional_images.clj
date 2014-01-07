@@ -55,7 +55,7 @@
 
 (defmacro fnimg
   [[?x ?y] & ?body]
-  `(fn [p#]
+  `(fn ?boolean [^Point p#]
      (let [~?x (:x p#)
            ~?y (:y p#)]
        ~@?body)))
