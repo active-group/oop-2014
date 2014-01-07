@@ -27,15 +27,27 @@
         (.setColor gr col)
         (.fillRect gr x y 1 1)))))
 
+(defn img->bitmap 
+  [img width height x-min x-max y-min y-max]
+  (let [bi (java.awt.image.BufferedImage. width height java.awt.image.BufferedImage/TYPE_INT_ARGB)]
+    (draw-image! img (.getGraphics bi) width height x-min x-max y-min y-max)
+    bi))
+
 (defn display-image!
   [img width height x-min x-max y-min y-max]
-  (let [c (canvas :paint 
+  (let [bi (img->bitmap img width height x-min x-max y-min y-max)
+        c (canvas :paint 
                   (fn [c g]
-                    (draw-image! img g width height x-min x-max y-min y-max)))
+                    (.drawImage g bi 0 0 java.awt.Color/WHITE nil)))
         f (frame :width width :height height
                  :title "Functional Image"
                  :content c)]
     (show! f)))
+
+(defn write-image!
+  [filename img width height x-min x-max y-min y-max]
+  (let [bi (img->bitmap img width height x-min x-max y-min y-max)]
+    (javax.imageio.ImageIO/write bi "png" (java.io.File. filename))))
 
 (defn check-image!
   [img
@@ -47,12 +59,6 @@
             y (range height)]
       (let [v (image-value img (+ x-min (* xinc x)) (+ y-min (* yinc y)))]
         (println "point: " x y (+ x-min (* xinc x)) (+ y-min (* yinc y)) v)))))
-
-(defn write-image!
-  [filename img width height x-min x-max y-min y-max]
-  (let [bi (java.awt.image.BufferedImage. width height java.awt.image.BufferedImage/TYPE_INT_ARGB)]
-    (draw-image! img (.getGraphics bi) width height x-min x-max y-min y-max)
-    (javax.imageio.ImageIO/write bi "png" (java.io.File. filename))))
 
 (comment 
 (defmacro defimg
