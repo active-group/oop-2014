@@ -45,24 +45,24 @@
 
 (comment 
 (defmacro defimg
-  [?name [?x ?y] & ?body]
+  [?name [?x ?y] ?body]
   `(defn ~?name
      [p#]
      (let [~?x (:x p#)
            ~?y (:y p#)]
-       ~@?body)))
+       ~?body)))
 )
 
 (defmacro fnimg
-  [[?x ?y] & ?body]
+  [[?x ?y] ?body]
   `(fn ?boolean [^Point p#]
      (let [~?x (:x p#)
            ~?y (:y p#)]
-       ~@?body)))
+       ~?body)))
 
 (defmacro defimg
-  [?name [?x ?y] & ?body]
-  `(def ~?name (fnimg [~?x ~?y] ~@?body)))
+  [?name [?x ?y] ?body]
+  `(def ~?name (fnimg [~?x ~?y] ~?body)))
 
 (defimg vstrip
   [x y]
