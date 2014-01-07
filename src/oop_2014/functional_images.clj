@@ -61,39 +61,50 @@
     (draw-image! img (.getGraphics bi) width height x-min x-max y-min y-max)
     (javax.imageio.ImageIO/write bi "png" (java.io.File. filename))))
 
-(defn vstrip
-  [p]
-  (let [x (:x p)
-        y (:y p)]
-    (<= (Math/abs x) 0.5)))
+(comment 
+(defmacro defimg
+  [?name [?x ?y] & ?body]
+  `(defn ~?name
+     [p#]
+     (let [~?x (:x p#)
+           ~?y (:y p#)]
+       ~@?body)))
+)
 
-(defn checker
-  [p]
-  (let [x (:x p)
-        y (:y p)]
-    (even? (+ (int (Math/floor x)) (int (Math/floor y))))))
+(defmacro fnimg
+  [[?x ?y] & ?body]
+  `(fn [p#]
+     (let [~?x (:x p#)
+           ~?y (:y p#)]
+       ~@?body)))
+
+(defmacro defimg
+  [?name [?x ?y] & ?body]
+  `(def ~?name (fnimg [~?x ~?y] ~@?body)))
+
+(defimg vstrip
+  [x y]
+  (<= (Math/abs x) 0.5))
+
+(defimg checker
+  [x y]
+  (even? (+ (int (Math/floor x)) (int (Math/floor y)))))
 
 (defn distance-from-origin
   [x y]
   (Math/sqrt (+ (* x x) (* y y))))
 
-(defn alt-rings
-  [p]
-  (let [x (:x p)
-        y (:y p)]
-    (even? (int (Math/floor (distance-from-origin x y))))))
+(defimg alt-rings
+  [x y]
+  (even? (int (Math/floor (distance-from-origin x y)))))
 
-(defn to-polar
-  [p]
-  (let [x (:x p)
-        y (:y p)]
-    (Point. (distance-from-origin x y)
-            (Math/atan2 x y))))
+(defimg to-polar
+  [x y]
+  (Point. (distance-from-origin x y)
+          (Math/atan2 x y)))
 
 (defn polar-checker
   [n]
-  (let [sc (fn [p]
-             (let [r (:x p)
-                   theta (:y p)]
-               (Point. r (* theta (/ (double n) Math/PI)))))]
+  (let [sc (fnimg [r theta]
+             (Point. r (* theta (/ (double n) Math/PI))))]
     (comp checker sc to-polar)))
