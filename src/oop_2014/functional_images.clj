@@ -21,29 +21,11 @@
     (doseq [x (range width)
             y (range height)]
       (let [v (image-value img (+ x-min (* xinc x)) (+ y-min (* yinc y)))
-            col (cond
-                 (true? v) java.awt.Color/BLACK
-                 (false? v) java.awt.Color/WHITE
-                 (number? v) (let [b (int (* v 255.0))] (color b b b))
-                 (vector? v) (let [[b g r a] v] (color (c r) (c g) (c b) (c a))))]
+            col (if v
+                  java.awt.Color/BLACK
+                  java.awt.Color/WHITE)]
         (.setColor gr col)
         (.fillRect gr x y 1 1)))))
-
-(defn check-image!
-  [img
-   width height
-   x-min x-max y-min y-max]
-  (let [xinc (/ (- x-max x-min) (double width))
-        yinc (/ (- y-max y-min) (double width))]
-    (doseq [x (range width)
-            y (range height)]
-      (let [v (image-value img (+ x-min (* xinc x)) (+ y-min (* yinc y)))
-            col (cond
-                 (true? v) java.awt.Color/BLACK
-                 (false? v) java.awt.Color/WHITE
-                 (number? v) (let [b (c v)] (color b b b))
-                 (vector? v) (let [[b g r a] v] (color (c r) (c g) (c b) (c a))))]
-        (println "point: " x y (+ x-min (* xinc x)) (+ y-min (* yinc y)) v col)))))
 
 (defn display-image!
   [img width height x-min x-max y-min y-max]
