@@ -29,8 +29,13 @@
 
 (defn img->bitmap 
   [img width height x-min x-max y-min y-max]
-  (let [bi (java.awt.image.BufferedImage. width height java.awt.image.BufferedImage/TYPE_INT_ARGB)]
-    (draw-image! img (.getGraphics bi) width height x-min x-max y-min y-max)
+  (let [bi (java.awt.image.BufferedImage. 
+            width height
+            java.awt.image.BufferedImage/TYPE_INT_ARGB)]
+    (draw-image! img 
+                 (.getGraphics bi)
+                 width height
+                 x-min x-max y-min y-max)
     bi))
 
 (defn display-image!
@@ -60,15 +65,13 @@
       (let [v (image-value img (+ x-min (* xinc x)) (+ y-min (* yinc y)))]
         (println "point: " x y (+ x-min (* xinc x)) (+ y-min (* yinc y)) v)))))
 
-(comment 
 (defmacro defimg
   [?name [?x ?y] ?body]
   `(defn ~?name
-     [p#]
+     ^Boolean [^Point p#]
      (let [~?x (:x p#)
            ~?y (:y p#)]
        ~?body)))
-)
 
 (defmacro fnimg
   [[?x ?y] ?body]
@@ -210,14 +213,33 @@
 
 (defn polar-checker
   [n]
+  (let [sc
+        (fn [p]
+          (Point. (:x p)
+                  (* (:y p)
+                     (/ (double n) Math/PI))))]
+    (apply-trafo (comp-trafos sc to-polar) checker)))
+
+(defn polar-checker
+  [n]
   (let [sc (fntrafo [r theta]
              (Point. r (* theta (/ (double n) Math/PI))))]
     (apply-trafo (comp-trafos sc to-polar) checker)))
 
 (defn translate-point
   [dx dy]
+  (fn [p]
+    (Point. (+ (:x p) dx) (+ (:y p) dy))))
+
+(defn translate-point
+  [dx dy]
   (fntrafo [x y]
     (Point. (+ x dx) (+ y dy))))
+
+(defn scale-point
+  [sx sy]
+  (fn [p]
+    (Point. (* sx (:x p)) (* sy (:y p)))))
 
 (defn scale-point
   [sx sy]
@@ -274,11 +296,12 @@
   (comp-trafos from-polar (comp-trafos xf to-polar)))
 
 (def rad-invert-polar
-  (from-polar-transformation (fntrafo [r theta]
-                               (Point. (if (zero? r)
-                                         0.0
-                                         (/ 1.0 r))
-                                       theta))))
+  (from-polar-transformation
+   (fntrafo [r theta]
+     (Point. (if (zero? r)
+               0.0
+               (/ 1.0 r))
+             theta))))
 
 (defn rad-invert
   [img]
