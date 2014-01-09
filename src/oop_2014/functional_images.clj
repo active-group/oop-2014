@@ -190,8 +190,18 @@
 
 (defn apply-trafo
   [trafo img]
+  (fn [p]
+    (img (trafo p))))
+
+(defn apply-trafo
+  [trafo img]
   (fnimg [x y]
     (img (trafo (Point. x y)))))
+
+(defn comp-trafos
+  [trafo1 trafo2]
+  (fn [p]
+    (trafo1 (trafo2 p))))
 
 (defn comp-trafos
   [trafo1 trafo2]
