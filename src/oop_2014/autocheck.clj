@@ -3,9 +3,7 @@
   (:use oop-2014.matcher)
   (:use clojure.math.numeric-tower))
 
-(defrecord
-    ^{:doc "Generator monad for random values."}
-    Generator
+(defrecord Generator
     ;; random-generator -> val
     [func])
 
@@ -33,7 +31,7 @@
           (fn [x]
             (bind (seqm (rest ms))
                   (fn [xs]
-                    (unit (conj xs x))))))))
+                    (unit (cons x xs))))))))
 
 (defn lift->generator
   "Lift a function on values to generators."
@@ -67,14 +65,14 @@
 (defn choose-ascii-letter
   "Generator for ASCII alphabetic letters."
   []
-  (lift->generator #(get "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz" %)
+  (lift->generator (fn [n] (get "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz" n))
                    (choose-integer 0 51)))
 
 ; (list a) -> (generator a)
 (defn choose-one-of
   "Make a generator that yields one of a list of values."
   [lis]
-  (lift->generator #(nth lis %)
+  (lift->generator (fn [n] (nth lis n))
                    (choose-integer 0 (- (count lis) 1))))
 
 (defn choose-boolean
@@ -94,7 +92,7 @@
                (fn [val]
                  (bind (recurse (- n 1))
                        (fn [rest]
-                         (unit (conj rest val))))))))]
+                         (unit (cons val rest))))))))]
     (recurse n)))
 
 ; (list (promise (generator a))) -> (generator a)
@@ -103,8 +101,7 @@
   [gens]
   (bind (choose-one-of gens) force))
 
-(defrecord ^{:doc "QuickCheck property"}
-    Property
+(defrecord Property
     [;; args -> value
      func
      ;; matches the value returned by func
@@ -137,18 +134,17 @@
 
 returns two values:
 - ntest
-- true for success, false for exhausted, result for failure"
+- true for success, Failure for failure"
   [gen rgen ntest nfail]
   (loop [rgen rgen
          ntest ntest]
-    (cond
-     (= ntest max-test) (list ntest true)
-     :else
-     (let [[rgen1 rgen2] (random-generator-split rgen)
-           result (generate rgen2 gen)]
-       (if (true? result)
-         (recur rgen1 (+ 1 ntest))
-         (list ntest result))))))
+    (if (= ntest max-test)
+      (list ntest true)
+      (let [[rgen1 rgen2] (random-generator-split rgen)
+            result (generate rgen2 gen)]
+        (if (true? result)
+          (recur rgen1 (+ 1 ntest))
+          (list ntest result))))))
 
 (defn check
   [prop]
