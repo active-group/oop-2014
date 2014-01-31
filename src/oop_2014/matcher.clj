@@ -14,10 +14,9 @@
 
 (defn is
   ([p? val] (Matcher. (fn [x] (p? x val)) (list 'is p? val)))
-  ([p] (cond
-        (fn? p) (Matcher. p  (list 'is p))
-        :else
-        (Matcher. (fn [x] (= x p)) (list 'is p)))))
+  ([p] (if (fn? p)
+         (Matcher. p  (list 'is p))
+         (Matcher. (fn [x] (= x p)) (list 'is p)))))
 
 (defn anything
   []
@@ -43,7 +42,7 @@
 (defn is-false
   []
   (Matcher. (fn [x] (not x))
-           'is-false))
+            'is-false))
 
 (defn all-of
   [& ms]
@@ -53,10 +52,10 @@
                       ms))
             (cons 'is-all-of (map :sexpr ms))))
 
-(defn seq-of
+(defn list-of
   [m]
   (Matcher. (fn [x]
-              (and (seq? x)
+              (and (list? x)
                    (every? (fn [e]
                              (matches? m e))
                            x)))
