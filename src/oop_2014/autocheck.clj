@@ -22,24 +22,6 @@
          (let [gen (k (func1 rgen1))]
            ((:func gen) rgen2)))))))
 
-; list-of (generator x) -> generator (list-of x) 
-(defn seqm
-  [ms]
-  (if (not (seq ms))
-    (unit '())
-    (bind (first ms)
-          (fn [x]
-            (bind (seqm (rest ms))
-                  (fn [xs]
-                    (unit (cons x xs))))))))
-
-(defn lift->generator
-  "Lift a function on values to generators."
-  [func gen]
-  (bind gen
-        (fn [v]
-          (unit (func v)))))
-
 ; random-gen (generator a) -> a
 (defn generate
   "Extract a value from a generator, using random generator rgen."
@@ -61,6 +43,14 @@
    (fn [rgen]
      (let [[n _] (random-float rgen lower upper)]
        n))))
+
+(defn lift->generator
+  "Lift a function on values to generators."
+  [func gen]
+  (bind gen
+        (fn [v]
+          (unit (func v)))))
+
 
 (defn choose-ascii-letter
   "Generator for ASCII alphabetic letters."
@@ -106,11 +96,21 @@
      func
      ;; matches the value returned by func
      matcher
-     arg-names
      ;; (seq generator)
      arg-generators])
 
 (defrecord Failure [property args])
+
+; list-of (generator x) -> generator (list-of x) 
+(defn seqm
+  [ms]
+  (if (not (seq ms))
+    (unit '())
+    (bind (first ms)
+          (fn [x]
+            (bind (seqm (rest ms))
+                  (fn [xs]
+                    (unit (cons x xs))))))))
 
 (defn property->result-generator
   [prop]
@@ -120,8 +120,8 @@
             (unit
              (if (matches? (:matcher prop) res)
                true
-               (Failure. prop
-                         (zipmap (:arg-names prop) arg-vals))))))))
+               (Failure. prop arg-vals)))))))
+
 
 (def max-test 100)
 
@@ -155,7 +155,6 @@ returns two values:
    (fn [a]
      a)
    (is-positive)
-   (list 'a)
    (list
     (choose-integer -1000 1000))))
 
@@ -164,7 +163,6 @@ returns two values:
    (fn [a b c]
      (= (+ a (+ b c)) (+ (+ a b) c)))
    (is-true)
-   (list 'a 'b 'c)
    (list
     (choose-integer -1000 1000)
     (choose-integer -1000 1000)
@@ -177,7 +175,6 @@ returns two values:
         ?rhss (map second ?pairs)]
     `(Property. (fn [~@?ids] ~@?body)
                 ~?matcher
-                '~?ids
                 (list ~@?rhss))))
 
 (def integer-positive2
